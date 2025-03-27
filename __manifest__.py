@@ -6,7 +6,7 @@
     'author': 'TELCO',
     'website': 'live.telco.co.zw',
     'version': '0.1',
-    'depends': ['base', 'account', 'mail'],
+    'depends': ['base', 'account', 'contacts', 'product'],
 
     "data": [
         "security/fiscalisation_groups.xml",
