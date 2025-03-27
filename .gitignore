@@ -1,0 +1,51 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.egg-info/
+dist/
+build/
+
+# Odoo specific
+.odoo-swift
+*.log
+*.pot
+*.mo
+/.env
+/.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# OS generated
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Local database
+*.db
+*.sql
+*.dump
+
+# Temporary files
+*.bak
+*~
+*.tmp
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# Documentation
+docs/_build/
