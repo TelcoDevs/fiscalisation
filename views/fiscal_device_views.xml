@@ -92,7 +92,11 @@
     </record>
 
     <!-- Top menu item -->
-    <menuitem name="fiscalisation" id="fiscalisation.menu_root"/>
+    <menuitem name="fiscalisation" 
+        id="fiscalisation.menu_root"
+        web_icon="fiscalisation/static/src/img/inv.png" 
+        groups="fiscalisation.admin_fiscalisation"
+    />
     <!-- menu categories -->
     <menuitem name="Devices" id="fiscalisation.menu_1" parent="fiscalisation.menu_root"/>
     <!-- <menuitem name="Menu 2" id="fiscalisation.menu_2" parent="fiscalisation.menu_root"/> -->
