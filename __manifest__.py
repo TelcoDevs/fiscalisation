@@ -5,7 +5,7 @@
     'category': 'Accounting',
     'author': 'TELCO',
     'website': 'live.telco.co.zw',
-    'version': '0.1',
+    'version': '16.0.1.0.0',
     'depends': ['base', 'account', 'contacts', 'product'],
 
     "data": [

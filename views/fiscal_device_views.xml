@@ -7,10 +7,10 @@
         <field name="model">fiscal.device</field>
         <field name="arch" type="xml">
             <tree>
-                <field name="name" />
-                <field name="device_id" />
-                <field name="device_serial" />
-                <field name="activation_key" />
+                <field name="name"/>
+                <field name="device_id"/>
+                <field name="device_serial"/>
+                <field name="activation_key"/>
             </tree>
         </field>
     </record>
@@ -35,12 +35,12 @@
                             string="Open Day" 
                             type="object"
                             class="btn-primary"
-                            invisible="is_day_open"/>
+                            attrs="{'invisible': [('is_day_open','=',True)]}"/>
                     <button name="action_close_day" 
                             string="Close Day" 
                             type="object"
                             class="btn-danger"
-                            invisible="not is_day_open"/>
+                            attrs="{'invisible': [('is_day_open','=',False)]}"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -149,10 +149,4 @@
             parent="fiscalisation.menu_root"
             action="fiscalisation.action_fiscal_device"
             />
-    <!-- <menuitem name="Menu 2" id="fiscalisation.menu_2" parent="fiscalisation.menu_root"/> -->
-    <!-- actions -->
-    <!-- <menuitem name="List" id="fiscalisation.menu_1_list" parent="fiscalisation.menu_1"
-              action="fiscalisation.action_fiscal_device"/> -->
-    <!-- <menuitem name="Server to list" id="fiscalisation" parent="fiscalisation.menu_2"
-              action="fiscalisation.action_server"/> -->
 </odoo>
