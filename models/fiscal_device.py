@@ -236,7 +236,7 @@ class FiscalDevice(models.Model):
     def action_close_day(self):
         self.ensure_one()
         response = self._api_request('/api/v1/day/close')
-        # self.is_day_open = False
+        self.is_day_open = False
         return self._show_notification(_('Day closed successfully'))
 
     def action_check_status(self):
@@ -295,6 +295,7 @@ class FiscalDevice(models.Model):
             'last_receipt_no': response.get('lastReceiptNo'),
             'fiscal_day_counters': response.get('fiscalDayCounters', []),
             'last_status_check': fields.Datetime.now(),
+            'fiscal_day_no': response.get('lastFiscalDayNo')
         })
     
     def _show_notification(self, title, message, is_error=False):
