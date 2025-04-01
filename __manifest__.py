@@ -18,6 +18,8 @@ It allows for auto-management of fiscal device tokens and regular device status 
         'base',
         'account',
         'mail',
+        'contacts',
+        'product'
     ],
     'data': [
         'security/fiscalisation_groups.xml',
