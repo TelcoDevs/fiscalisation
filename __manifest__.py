@@ -14,7 +14,8 @@
         "views/fiscal_device_views.xml",
         "views/templates.xml",
         "views/account_move_views.xml",
-        "reports/report_invoice.xml"
+        "reports/report_invoice.xml",
+        "data/cron_data.xml",
     ],
     # only loaded in demonstration mode
     'external_dependencies': {
