@@ -24,7 +24,7 @@ class FiscalDevice(models.Model):
     access_token = fields.Char(string='Access Token', copy=False)
     refresh_token = fields.Char(string='Refresh Token', copy=False)
     token_expiry = fields.Datetime(string='Token Expiry')
-    is_day_open = fields.Boolean(string='Day Open', tracking=True)
+    is_day_open = fields.Boolean(string='Day Open', compute="_compute_is_day_open", store=True, tracking=True)
     fiscal_day_status = fields.Char(string='Fiscal Day Status', readonly=True)
     last_receipt_global_no = fields.Integer(string='Last Global Receipt No', readonly=True)
     last_receipt_no = fields.Integer(string='Last Receipt No', readonly=True)
@@ -42,6 +42,11 @@ class FiscalDevice(models.Model):
         ('company_device_unique', 'unique(company_id, device_id)', 'Device ID must be unique per company!'),
     ]
     
+    @api.depends('fiscal_day_status')
+    def _compute_is_day_open(self):
+        """Compute day open status based on fiscal day status"""
+        for record in self:
+            record.is_day_open = record.fiscal_day_status != 'FISCALDAYCLOSED'
     
     def action_manual_token_refresh(self):
         """Manual token refresh with user feedback"""
@@ -223,7 +228,7 @@ class FiscalDevice(models.Model):
             response = self._api_request('/api/v1/day/open')
             self.write({
                 'fiscal_day_no': str(response['fiscalDayNo']),
-                'is_day_open': True,
+                'fiscal_day_status': 'FISCALDAYOPENED',
                 'last_operation': fields.Datetime.now()
             })
             return self._show_notification(
@@ -235,9 +240,42 @@ class FiscalDevice(models.Model):
     
     def action_close_day(self):
         self.ensure_one()
-        response = self._api_request('/api/v1/day/close')
-        self.is_day_open = False
-        return self._show_notification(_('Day closed successfully'))
+        try:
+            response = self._api_request('/api/v1/day/close')
+            
+            # Process the response data
+            self.write({
+                'fiscal_day_status': response.get('fiscalDayStatus'),
+                'last_receipt_global_no': response.get('lastReceiptGlobalNo'),
+                'fiscal_day_no': response.get('fiscalDayNo'),
+                'last_operation': fields.Datetime.now()
+            })
+            
+            # Format success message with response details
+            close_time = response.get('fiscalDayClosed', 'N/A')
+            message = _(
+                "Day closed successfully!\n"
+                "• Fiscal Day Number: %(day_no)s\n"
+                "• Closed At: %(close_time)s\n"
+                "• Last Receipt: #%(receipt_no)d"
+            ) % {
+                'day_no': response.get('fiscalDayNo', 'N/A'),
+                'close_time': close_time,
+                'receipt_no': response.get('lastReceiptNo', 0)
+            }
+            
+            return self._show_notification(
+                _('Day Closed Successfully'),  # Title
+                message,  # Detailed message
+                is_error=False
+            )
+            
+        except UserError as e:
+            return self._show_notification(
+                _('Close Day Failed'),  # Title
+                str(e),  # Error message
+                is_error=True
+            )
 
     def action_check_status(self):
         """Manual status check triggered by button"""
@@ -260,10 +298,10 @@ class FiscalDevice(models.Model):
     @api.model
     def cron_check_device_status(self):
         """Enhanced cron job with error isolation"""
-        devices = self.search([('active', '=', True)])
+        devices = self.search([])
         for device in devices:
             try:
-                response = device._api_request('/api/v1/status', method='GET')
+                response = device._api_request('/api/v1/status', method='POST')
                 device._process_status_response(response)
                 _logger.info("Status check succeeded for %s", device.name)
             except Exception as e:
@@ -274,6 +312,20 @@ class FiscalDevice(models.Model):
                     partner_ids=device.company_id.user_ids.partner_id.ids
                 )
 
+    def _cron_refresh_tokens(self):
+        """Cron job to refresh tokens for all devices"""
+        devices = self.search([])
+        for device in devices:
+            try:
+                device._refresh_token_if_needed()
+                _logger.info("Token refreshed successfully for %s", device.name)
+            except Exception as e:
+                _logger.error("Token refresh failed for %s: %s", device.name, str(e))
+                device.message_post(
+                    body=_("Automatic token refresh failed: %s") % str(e),
+                    subject=_("Token Refresh Error"),
+                    partner_ids=device.company_id.user_ids.partner_id.ids
+                )
     # Helper methods
     def _show_notification(self, title, message, is_error=False):
         return {
@@ -298,15 +350,4 @@ class FiscalDevice(models.Model):
             'fiscal_day_no': response.get('lastFiscalDayNo')
         })
     
-    def _show_notification(self, title, message, is_error=False):
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': title,
-                'message': message,
-                'type': 'danger' if is_error else 'success',
-                'sticky': is_error
-            }
-        }
     
