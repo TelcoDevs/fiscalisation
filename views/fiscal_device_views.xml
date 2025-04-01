@@ -99,7 +99,7 @@
     <!-- Top menu item -->
     <menuitem name="fiscalisation" 
         id="fiscalisation.menu_root"
-        web_icon="fiscalisation/static/src/img/inv.png" 
+        web_icon="fiscalisation,static/src/img/bill.png" 
         groups="fiscalisation.admin_fiscalisation"
     />
     <!-- menu categories -->
