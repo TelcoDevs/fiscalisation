@@ -10,7 +10,6 @@ This module provides integration with fiscal devices to ensure compliance with Z
 It allows for auto-management of fiscal device tokens and regular device status checks.
     """,
     'category': 'Accounting',
-    'version': '18.0.1.0.0',
     'author': 'TELCO',
     'website': 'live.telco.co.zw',
     'version': '16.0.1.0.0',
@@ -22,7 +21,9 @@ It allows for auto-management of fiscal device tokens and regular device status 
         "views/fiscal_device_views.xml",
         "views/templates.xml",
         "views/account_move_views.xml",
-        "reports/report_invoice.xml"
+        "reports/report_invoice.xml",
+        "views/res_partner_view.xml",
+        "views/product_view.xml"
     ],
     # only loaded in demonstration mode
     'external_dependencies': {

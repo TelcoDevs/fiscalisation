@@ -13,13 +13,13 @@
                         class="btn btn-info mr-3"
                         type="object"
                         style="background:rgba(46, 210, 162,0.2);"
-                        attrs="{'invisible': ['|', ('fiscalised', '=', False), ('state', '!=', 'posted')]}"
+                        attrs="{'invisible': ['|', ('fiscalised', '=', True), ('state', '!=', 'posted')]}"
                         />
                 </xpath>
 
                 <!-- Add a new page in the notebook for Fiscal Information -->
                 <xpath expr="//notebook" position="inside">
-                    <page string="Fiscal Information" attrs="{'invisible': [('fiscalised', '=', False)]}">
+                    <page string="Fiscal Information" attrs="{'invisible': ['|', ('fiscalised', '=', False), ('device_id', '=', False)]}">
                         <group>
                             <field name="qr_url" readonly="1"/>
                             <field name="fiscal_date" readonly="True"/>

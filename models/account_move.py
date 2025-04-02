@@ -18,7 +18,7 @@ class AccountMove(models.Model):
     qr_url = fields.Char(string='QR Code URL', readonly=True, copy=False)
     qr_code = fields.Binary(string='QR Code', compute='_compute_qr_code', copy=False)
     fiscal_date = fields.Datetime(string='Fiscalisation Date', readonly=True, copy=False)
-    device_id = fields.Char(string='Device ID', readonly=True, compute='_compute_device_id')
+    device_id = fields.Char(string='Device ID', readonly=True, compute='_compute_device_id', store=True)
     receipt_global_number = fields.Char(string='Receipt Global Number', readonly=True, copy=False)
     receipt_number = fields.Char(string='Receipt Number', readonly=True, copy=False)
     fiscal_day_no = fields.Char(string='Fiscal Day', readonly=True, copy=False)
