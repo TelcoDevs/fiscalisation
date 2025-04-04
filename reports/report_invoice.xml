@@ -218,7 +218,8 @@
                                     <div class="row">
                                         <div class="col-6">
                                             <strong>Device Serial No:</strong>
-                                            <span t-field="o.device_serial"/>
+                                            <t t-set="device" t-value="env['fiscal.device'].search([('company_id', '=', o.company_id.id)], limit=1)"/>
+                                            <span t-esc="device.device_serial if device else 'N/A'"/>
                                         </div>
                                         <div class="col-6">
                                             <strong>Invoice No:</strong>

@@ -20,7 +20,7 @@
         "security/ir.model.access.csv",
         "views/fiscal_device_views.xml",
         "views/account_move_views.xml",
-        "reports/report_invoice.xml",
+        # "reports/report_invoice.xml",
         'data/cron_data.xml',
         'views/res_partner_view.xml',
         'views/product_view.xml'
