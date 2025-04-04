@@ -17,8 +17,10 @@ class AccountMove(models.Model):
     receipt_type = fields.Char(string='Receipt Type', compute='_compute_receipt_type')
     qr_url = fields.Char(string='QR Code URL', readonly=True, copy=False)
     qr_code = fields.Binary(string='QR Code', compute='_compute_qr_code', copy=False)
+    fdms_url = fields.Char(string='FDMS URL', readonly=True, copy=False, compute='_compute_fdms_url')
     fiscal_date = fields.Datetime(string='Fiscalisation Date', readonly=True, copy=False)
     device_id = fields.Char(string='Device ID', readonly=True, compute='_compute_device_id', store=True)
+    device_serial = fields.Char(string='Device Serial', readonly=True, compute='_compute_device_serial', store=True)
     receipt_global_number = fields.Char(string='Receipt Global Number', readonly=True, copy=False)
     receipt_number = fields.Char(string='Receipt Number', readonly=True, copy=False)
     fiscal_day_no = fields.Char(string='Fiscal Day', readonly=True, copy=False)
@@ -53,6 +55,22 @@ class AccountMove(models.Model):
                 ('company_id', '=', invoice.company_id.id)
             ], limit=1)
             invoice.device_id = device.device_id if device else False
+
+    @api.depends('company_id')
+    def _compute_device_serial(self):
+        for invoice in self:
+            device = self.env['fiscal.device'].search([
+                ('company_id', '=', invoice.company_id.id)
+            ], limit=1)
+            invoice.device_serial = device.device_serial if device else False
+
+    @api.depends('company_id')
+    def _compute_fdms_url(self):
+        for invoice in self:
+            device = self.env['fiscal.device'].search([
+                ('company_id', '=', invoice.company_id.id)
+            ], limit=1)
+            invoice.fdms_url = device.base_url if device else False
 
     def _compute_qr_code(self):
         for invoice in self:

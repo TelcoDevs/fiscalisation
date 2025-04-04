@@ -13,7 +13,7 @@
                         class="btn btn-info mr-3"
                         type="object"
                         style="background:rgba(46, 210, 162,0.2);"
-                        attrs="{'invisible': ['|', ('fiscalised', '=', True), ('state', '!=', 'posted')]}"
+                        attrs="{'invisible': ['|', '|', ('device_id', '=', False), ('fiscalised', '=', True), ('state', '!=', 'posted')]}"
                         />
                 </xpath>
 

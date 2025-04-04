@@ -3,11 +3,11 @@
     'name': 'ZIMRA Fiscalisation',
     'summary': 'Fiscal Device Integration',
     'description': """
-ZIMRA Fiscalisation
-===================
+        ZIMRA Fiscalisation
+        ===================
 
-This module provides integration with fiscal devices to ensure compliance with ZIMRA fiscalisation requirements.
-It allows for auto-management of fiscal device tokens and regular device status checks.
+        This module provides integration with fiscal devices to ensure compliance with ZIMRA fiscalisation requirements.
+        It allows for auto-management of fiscal device tokens and regular device status checks.
     """,
     'category': 'Accounting',
     'author': 'TELCO',
@@ -19,11 +19,11 @@ It allows for auto-management of fiscal device tokens and regular device status 
         "security/fiscalisation_groups.xml",
         "security/ir.model.access.csv",
         "views/fiscal_device_views.xml",
-        "views/templates.xml",
         "views/account_move_views.xml",
         "reports/report_invoice.xml",
-        "views/res_partner_view.xml",
-        "views/product_view.xml"
+        'data/cron_data.xml',
+        'views/res_partner_view.xml',
+        'views/product_view.xml'
     ],
     # only loaded in demonstration mode
     'external_dependencies': {
