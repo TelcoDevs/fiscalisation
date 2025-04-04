@@ -18,6 +18,8 @@ It allows for auto-management of fiscal device tokens and regular device status 
         'base',
         'account',
         'mail',
+        'contacts',
+        'product'
     ],
     'data': [
         'security/fiscalisation_groups.xml',
@@ -27,6 +29,8 @@ It allows for auto-management of fiscal device tokens and regular device status 
         'views/account_move_views.xml',
         'reports/report_invoice.xml',
         'data/cron_data.xml',
+        'views/res_partner_view.xml',
+        'views/product_view.xml'
     ],
     'demo': [
         'demo/demo.xml',

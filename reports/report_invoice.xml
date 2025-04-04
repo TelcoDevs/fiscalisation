@@ -16,7 +16,7 @@
                     <span t-elif="o.move_type == 'out_refund' and o.state == 'posted'">Credit Note</span>
                     <span t-elif="o.move_type == 'out_refund' and o.state == 'draft'">Draft Credit Note</span>
                     <span t-elif="o.move_type == 'out_refund' and o.state == 'cancel'">Cancelled Credit Note</span>
-                    <span t-elif="o.move_type == 'in_refund'">Vendor Credit Note</span>
+                    <span t-elif="o.move_type == 'in_refund'">Debit Note</span>
                     <span t-elif="o.move_type == 'in_invoice'">Vendor Bill</span>
                     <span t-if="o.name != '/'" t-field="o.name">INV/2023/0001</span>
                 </t>
@@ -29,13 +29,14 @@
                             <h2 class="col-6" style="max-width: 50%; text-align: left; margin-top: 0 !important; padding-top: 5px;">
                                 <br/>
                                 <span style="" t-field="o.currency_id.name"/>
-                                <span t-if="o.move_type == 'out_invoice' and o.state == 'posted'">FISCAL TAX INVOICE</span>
+                                <span t-if="o.move_type == 'out_invoice' and o.state == 'posted' and o.partner_id.vat">FISCAL TAX INVOICE</span>
+                                <span t-elif="o.move_type == 'out_invoice' and o.state == 'posted'">FISCAL INVOICE</span>
                                 <span t-elif="o.move_type == 'out_invoice' and o.state == 'draft'">Draft Invoice</span>
                                 <span t-elif="o.move_type == 'out_invoice' and o.state == 'cancel'">CANCELLED INVOICE</span>
                                 <span t-elif="o.move_type == 'out_refund' and o.state == 'posted'" style="text-align: left; margin-top: -10% !important;">CREDIT NOTE</span>
                                 <span t-elif="o.move_type == 'out_refund' and o.state == 'draft'">Draft Credit Note</span>
                                 <span t-elif="o.move_type == 'out_refund' and o.state == 'cancel'">Cancelled Credit Note</span>
-                                <span t-elif="o.move_type == 'in_refund'">Vendor Credit Note</span>
+                                <span t-elif="o.move_type == 'in_refund'">DEBIT NOTE</span>
                                 <span t-elif="o.move_type == 'in_invoice'">Vendor Bill</span>
                             </h2>
                             <br/>
@@ -52,6 +53,9 @@
                                     </t>
                                     <t t-if="o.state == 'draft' and o.move_type == 'out_invoice'">
                                         <strong>DRAFT INVOICE DETAILS</strong>
+                                    </t>
+                                    <t t-if="o.move_type == 'in_refund'">
+                                        <strong>DEBIT NOTE DETAILS</strong>
                                     </t>
                                 </div>
                             </div>
@@ -85,13 +89,16 @@
                                         <strong>Document Source:</strong>
                                         <span t-field="o.invoice_origin"/>
                                         <br/>
+                                        <strong>Fiscal Day No:</strong>
+                                        <span t-field="o.fiscal_day_no"/>
+                                        <br/>
                                         <!-- Fiscalization Details -->
                                         <span t-if="o.fiscalised">
                                             <strong>Fiscalisation Date:</strong>
                                             <span t-field="o.fiscal_date" t-if="o.fiscalised"/>
                                             <span t-field="o.fiscal_date" t-else=""/>
+                                            <br/>
                                         </span>
-                                        <br/>
                                         <strong>Invoice Date:</strong>
                                         <span t-field="o.invoice_date"/>
                                         <br/>
@@ -112,7 +119,27 @@
                                         <strong>Document Source:</strong>
                                         <span t-field="o.invoice_origin"/>
                                         <br/>
+                                        <strong>Fiscal Day No:</strong>
+                                        <span t-field="o.fiscal_day_no"/>
+                                        <br/>
                                         <strong>Credit Note Date:</strong>
+                                        <span t-field="o.invoice_date"/>
+                                        <br/>
+                                    </t>
+                                    <t t-if="o.move_type == 'in_refund'">
+                                        <strong>Debit Note No:</strong>
+                                        <span t-if="o.name != '/'" t-esc="o.name.replace('/', '')"/>
+                                        <br/>
+                                        <strong>Reference:</strong>
+                                        <span t-esc="o.ref.split(',')[0].strip().replace('/', '') if ',' in o.ref else o.ref.strip().replace('/', '')"/>
+                                        <br/>
+                                        <strong>Document Source:</strong>
+                                        <span t-field="o.invoice_origin"/>
+                                        <br/>
+                                        <strong>Fiscal Day No:</strong>
+                                        <span t-field="o.fiscal_day_no"/>
+                                        <br/>
+                                        <strong>Debit Note Date:</strong>
                                         <span t-field="o.invoice_date"/>
                                         <br/>
                                     </t>
@@ -178,11 +205,47 @@
                         <!-- Common section for both fiscal and standard invoice -->
                         <hr t-if="o.device_id" style="border: 1px solid #000000; margin-top: 5px; margin-bottom: 20px;"/>
                         
-                        <!-- Fiscalization Details Section -->
-                        <div class="row" t-if="o.fiscalised and o.device_id">
+                        <!-- Credit/Debit Note Information Block -->
+                        <div class="row" t-if="o.move_type in ['out_refund', 'in_refund'] and o.device_id" style="margin-bottom: 20px;">
                             <div class="col-12">
                                 <div style="border: 1px solid #000; padding: 10px; margin-bottom: 20px;">
-                                    <h4 style="border-bottom: 1px solid #000; padding-bottom: 5px;">FISCALISATION DETAILS</h4>
+                                    <div style="border-bottom: 1px solid #000; padding-bottom: 5px;">
+                                        <strong>
+                                            <t t-if="o.move_type == 'out_refund'">CREDITED INVOICE</t>
+                                            <t t-elif="o.move_type == 'in_refund'">DEBITED INVOICE</t>
+                                        </strong>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <strong>Device Serial No:</strong>
+                                            <span t-field="o.device_serial"/>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>Invoice No:</strong>
+                                            <span t-field="o.reversed_entry_id.name"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <strong>Receipt Date:</strong>
+                                            <span t-field="o.reversed_entry_id.invoice_date"/>
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>Customer reference No:</strong>
+                                            <span t-field="o.reversed_entry_id.ref"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Fiscalization Details Section -->
+                        <div class="row" t-if="o.fiscalised and o.device_id" style="margin-top: 20px;">
+                            <div class="col-12">
+                                <div style="border: 1px solid #000; padding: 10px; margin-bottom: 20px;">
+                                    <div style="border-bottom: 1px solid #000; padding-bottom: 5px;">
+                                        <strong>FISCALISATION DETAILS</strong>
+                                    </div>
                                     <div class="row">
                                         <div class="col-8">
                                             <div class="row">
@@ -203,6 +266,14 @@
                                             </div>
                                             <div class="row">
                                                 <div class="col-6">
+                                                    <strong>Device Serial:</strong>
+                                                </div>
+                                                <div class="col-6">
+                                                    <span t-field="o.device_serial"/>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-6">
                                                     <strong>Receipt Global No:</strong>
                                                 </div>
                                                 <div class="col-6">
@@ -217,6 +288,14 @@
                                                     <span t-field="o.verification_code"/>
                                                 </div>
                                             </div>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <strong>Fiscal Day No:</strong>
+                                                </div>
+                                                <div class="col-6">
+                                                    <span t-field="o.fiscal_day_no"/>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="col-4 text-center">
                                             <t t-if="o.qr_code">
@@ -224,7 +303,9 @@
                                                     t-att-src="'data:image/png;base64,%s' % o.qr_code.decode('utf-8')" 
                                                     style="width:115px;height:115px"
                                                     alt="Fiscal QR Code" />
-                                                <p class="text-center text-muted small mt-2">Scan to Verify</p>
+                                                <p class="text-center text-muted small mt-2">
+                                                    You can verify this receipt at<br /><span t-field="o.fdms_url"/>
+                                                </p>
                                             </t>
                                         </div>
                                     </div>
@@ -278,10 +359,10 @@
                                             </td>
                                             <td name="account_invoice_line_name">
                                                 <t t-if="line.name">
-                                                    <span t-field="line.name" t-options="{'widget': 'text'}"></span>
                                                     <t t-if="line.discount > 0 and o.device_id">
-                                                        <span>(Discount) </span>
+                                                        <span>Discount: </span>
                                                     </t>
+                                                    <span t-field="line.name" t-options="{'widget': 'text'}"></span>
                                                 </t>
                                             </td>
                                             <td name="td_quantity" class="text-end">
@@ -295,7 +376,22 @@
                                             </td>
                                             <t t-set="taxes" t-value="', '.join([(tax.invoice_label or tax.name) for tax in line.tax_ids])"/>
                                             <td name="td_taxes" class="text-end">
-                                                <span t-esc="'{:,.2f}'.format(line.price_total - line.price_subtotal)"/>
+                                                <t t-if="line.tax_ids and line.price_total > line.price_subtotal">
+                                                    <t t-if="o.company_id.tax_calculation_rounding_method == 'round_globally'">
+                                                        <!-- Tax exclusive mode -->
+                                                        <span t-esc="'{:,.2f}'.format(line.price_subtotal * (line.tax_ids[0].amount / 100))"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <!-- Tax inclusive mode -->
+                                                        <span t-esc="'{:,.2f}'.format(line.price_total - line.price_subtotal)"/>
+                                                    </t>
+                                                </t>
+                                                <t t-elif="line.tax_ids">
+                                                    <span>0.00</span>
+                                                </t>
+                                                <t t-else="">
+                                                    <span>Exempt</span>
+                                                </t>
                                             </td>
                                             <td class="text-end o_price_total">
                                                 <span class="text-nowrap" t-esc="'{:,.2f}'.format(line.price_total)"/>
@@ -336,6 +432,8 @@
                                     <table class="table table-sm" style="page-break-inside: avoid;">
                                         <t t-set="tax_totals" t-value="o.tax_totals"/>
                                         <t t-set="currency" t-value="o.currency_id"/>
+                                        
+                                        <!-- Tax Totals Section -->
                                         <t t-foreach="tax_totals['subtotals']" t-as="subtotal">
                                             <tr class="border-black o_subtotal">
                                                 <td style="">
@@ -346,6 +444,24 @@
                                                     <span t-att-class="eo_subtotal_footer_separator" t-esc="'{:,.2f}'.format(o.amount_untaxed)"/>
                                                 </td>
                                             </tr>
+                                            
+                                            <!-- Tax Breakdown Table -->
+                                            <t t-if="tax_totals.get('groups_by_subtotal')">
+                                                <t t-foreach="tax_totals['groups_by_subtotal'][subtotal['name']]" t-as="tax_group">
+                                                    <tr>
+                                                        <td>
+                                                            <span t-esc="tax_group['tax_group_name']"/>
+                                                            <span t-if="tax_group['group_tax_base_amount'] != tax_group['group_amount']"> on 
+                                                                <span t-esc="'{:,.2f}'.format(tax_group['group_tax_base_amount'])"/>
+                                                            </span>
+                                                        </td>
+                                                        <td class="text-end o_price_total">
+                                                            <span t-esc="'{:,.2f}'.format(tax_group['tax_group_amount'])"/>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </t>
+                                            
                                             <tr>
                                                 <t t-if="not display_tax_base">
                                                     <td>
@@ -405,11 +521,11 @@
                                         </t>
                                         <tr class="border-green o_total">
                                             <td>
-                                                <strong style="color: #FFF;"><span class="m-0" t-field="o.currency_id.name"/> INVOICE TOTAL
+                                                <strong><span class="m-0" t-field="o.currency_id.name"/> INVOICE TOTAL
                                                 </strong>
                                             </td>
                                             <td class="text-end">
-                                                <span class="text-light" t-esc="'{:,.2f}'.format(o.amount_total)"></span>
+                                                <span t-esc="'{:,.2f}'.format(o.amount_total)"></span>
                                             </td>
                                         </tr>
                                         <t t-if="print_with_payments">
@@ -442,7 +558,7 @@
                                 </div>
                             </div>
                             
-                            <!-- Footer Section (Credit Note Reason & QR Code) -->
+                            <!-- Footer Section (Credit/Debit Note Reason & Notes) -->
                             <div class="row align-items-start" style="margin-top: 20px !important;">
                                 <div t-attf-class="#{'col-8' if report_type != 'html' else 'col-sm-9 col-md-8'} ">
                                     <t t-if="o.move_type == 'out_refund'">
@@ -452,18 +568,30 @@
                                             <span t-esc="' '.join(o.ref.split(',')[1:]).strip() if ',' in o.ref else o.ref"/>
                                         </div>
                                     </t>
+                                    <t t-if="o.move_type == 'in_refund'">
+                                        <div style="border: 1px solid #000; padding: 10px; margin-top: 20px;">
+                                            <strong>Reason for Debit Note:</strong>
+                                            <br/>
+                                            <span t-esc="' '.join(o.ref.split(',')[1:]).strip() if ',' in o.ref else o.ref"/>
+                                        </div>
+                                    </t>
+                                    
+                                    <!-- Note Field (field 49) -->
+                                    <t t-if="o.narration">
+                                        <div style="border: 1px solid #000; padding: 10px; margin-top: 20px;">
+                                            <strong>Note:</strong>
+                                            <br/>
+                                            <span t-field="o.narration"/>
+                                        </div>
+                                    </t>
                                 </div>
                                 
-                                <!-- QR Code Section -->
+                                <!-- QR Validation URL -->
                                 <!-- <div class="col-4 text-end">
-                                    <t t-if="o.fiscalised and o.qr_code">
-                                        <img t-if="o.qr_code" 
-                                            t-att-src="'data:image/png;base64,%s' % o.qr_code.decode('utf-8')" 
-                                            style="width:115px;height:115px"
-                                            alt="Fiscal QR Code" />
-                                        <p class="mb-0">Verification Code</p>
-                                        <span t-field="o.verification_code"/>
-                                    </t>
+                                    <div t-if="o.fiscalised and o.qr_code" style="margin-top: 20px;">
+                                        <p class="mb-0">Validation URL:</p>
+                                        <span t-field="o.qr_url"/>
+                                    </div>
                                 </div> -->
                             </div>
                         </div>
