@@ -79,10 +79,11 @@ class AccountMove(models.Model):
             else:
                 invoice.qr_code = False
 
-    def _generate_qr_code(self, data):
+    def _generate_qr_code(self, data, silent_errors=False):
         try:
             import qrcode
             from io import BytesIO
+            
             qr = qrcode.QRCode(
                 version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -96,7 +97,8 @@ class AccountMove(models.Model):
             img.save(buffer, format="PNG")
             return base64.b64encode(buffer.getvalue())
         except ImportError:
-            _logger.warning("QR code generation requires python-qrcode library")
+            if not silent_errors:
+                _logger.warning("QR code generation requires python-qrcode library")
             return False
 
     def action_fiscalise_invoice(self):
