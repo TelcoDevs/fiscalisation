@@ -21,6 +21,7 @@ class FiscalDevice(models.Model):
     device_serial = fields.Char(string='Device Serial', required=True, tracking=True)
     activation_key = fields.Char(string='Activation Key', required=True, tracking=True)
     base_url = fields.Char(string='API Base URL', default='https://fiscal-demo.telco.co.zw', required=True, tracking=True)
+    fdms_url = fields.Char(string='API Base URL', compute='_compute_fdms_url', required=True, tracking=True)
     access_token = fields.Char(string='Access Token', copy=False)
     refresh_token = fields.Char(string='Refresh Token', copy=False)
     token_expiry = fields.Datetime(string='Token Expiry')
@@ -47,6 +48,15 @@ class FiscalDevice(models.Model):
         """Compute day open status based on fiscal day status"""
         for record in self:
             record.is_day_open = record.fiscal_day_status != 'FISCALDAYCLOSED'
+
+    @api.depends('base_url')
+    def _compute_fdms_url(self):
+        """FDMS URL for verification"""
+        for record in self:
+            if record.base_url == 'https://fiscal.telco.co.zw':
+                record.fdms_url = 'https://fdms.zimra.co.zw'
+            else:
+                record.fdms_url = 'https://fdmstest.zimra.co.zw'
     
     def action_manual_token_refresh(self):
         """Manual token refresh with user feedback"""
