@@ -447,9 +447,7 @@
                                                     <tr>
                                                         <td>
                                                             <span t-esc="tax_group['tax_group_name']"/>
-                                                            <span t-if="tax_group['group_tax_base_amount'] != tax_group['group_amount']"> on 
-                                                                <span t-esc="'{:,.2f}'.format(tax_group['group_tax_base_amount'])"/>
-                                                            </span>
+                                                            <!-- Removed the conditional part that was causing errors -->
                                                         </td>
                                                         <td class="text-end o_price_total">
                                                             <span t-esc="'{:,.2f}'.format(tax_group['tax_group_amount'])"/>
