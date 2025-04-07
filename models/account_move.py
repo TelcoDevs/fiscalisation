@@ -253,7 +253,7 @@ class AccountMove(models.Model):
             lines.append(sale_line_data)
 
             # If the line has a discount, add a separate discount line
-            if line.discount > 0 or 'discount' in line.name.lower():
+            if line.discount > 0:
                 discount_amount = line.price_unit * (line.discount / 100.0)
                 discount_total = discount_amount * line.quantity
                 discount_line_data = {
