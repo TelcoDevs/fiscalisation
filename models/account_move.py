@@ -26,7 +26,6 @@ class AccountMove(models.Model):
     fiscal_day_no = fields.Char(string='Fiscal Day', readonly=True, copy=False)
     verification_code = fields.Char(string='Verification Code', readonly=True, copy=False)
     fiscalised = fields.Boolean(string='Fiscalised', readonly=True, default=False, copy=False)
-    fiscal_receipt_id = fields.Many2one('fiscalisation.receipts', string='Fiscal Receipt', readonly=True, copy=False)
 
     @api.depends('partner_id')
     def _compute_customer_vat(self):
@@ -75,15 +74,14 @@ class AccountMove(models.Model):
     def _compute_qr_code(self):
         for invoice in self:
             if invoice.verification_code:
-                invoice.qr_code = self._generate_qr_code(invoice.qr_url)
+                invoice.qr_code = self._generate_fiscal_invoice_qr_code(invoice.qr_url)
             else:
                 invoice.qr_code = False
 
-    def _generate_qr_code(self, data, silent_errors=False):
+    def _generate_fiscal_invoice_qr_code(self, data):
         try:
             import qrcode
             from io import BytesIO
-            
             qr = qrcode.QRCode(
                 version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -97,8 +95,7 @@ class AccountMove(models.Model):
             img.save(buffer, format="PNG")
             return base64.b64encode(buffer.getvalue())
         except ImportError:
-            if not silent_errors:
-                _logger.warning("QR code generation requires python-qrcode library")
+            _logger.warning("QR code generation requires python-qrcode library")
             return False
 
     def action_fiscalise_invoice(self):
