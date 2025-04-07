@@ -69,7 +69,7 @@ class AccountMove(models.Model):
             device = self.env['fiscal.device'].search([
                 ('company_id', '=', invoice.company_id.id)
             ], limit=1)
-            invoice.fdms_url = device.base_url if device else False
+            invoice.fdms_url = device.fdms_url if device else False
 
     def _compute_qr_code(self):
         for invoice in self:
