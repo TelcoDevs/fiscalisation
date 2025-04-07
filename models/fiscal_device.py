@@ -92,7 +92,7 @@ class FiscalDevice(models.Model):
             self._get_new_token()
 
     def _get_new_token(self):
-        """Acquire new JWT token from API"""
+        """Acquire new JWT token from API with better error handling"""
         try:
             response = requests.post(
                 f"{self.base_url}/api/v1/devices/token",
@@ -110,18 +110,58 @@ class FiscalDevice(models.Model):
                 'refresh_token': token_data['refresh_token'],
                 'token_expiry': fields.Datetime.to_string(datetime.now() + timedelta(seconds=token_data['expires_in']))
             })
+        except requests.exceptions.ConnectionError as e:
+            error_msg = _("Cannot connect to fiscal device server: %s. Connection refused.") % self.base_url
+            self.write({
+                'last_error_code': 'CONNECTION_REFUSED',
+                'last_error_message': error_msg,
+                'last_error_status': 0,
+                'last_status_check': fields.Datetime.now(),
+            })
+            raise UserError(error_msg) from e
+        except requests.exceptions.Timeout as e:
+            error_msg = _("Connection timed out after %s seconds when requesting token.") % TIMEOUT
+            self.write({
+                'last_error_code': 'TIMEOUT',
+                'last_error_message': error_msg,
+                'last_error_status': 0,
+                'last_status_check': fields.Datetime.now(),
+            })
+            raise UserError(error_msg) from e
+        except requests.exceptions.HTTPError as e:
+            error_data = self._parse_error_response(e)
+            self._log_error_details(error_data)
+            raise UserError(self._format_error_message(error_data)) from e
         except Exception as e:
-            self._handle_api_error(e, _("Token refresh failed"))
-            raise
+            error_msg = _("Token refresh failed: %s") % str(e)
+            self.write({
+                'last_error_code': 'UNKNOWN_ERROR',
+                'last_error_message': error_msg,
+                'last_error_status': 0,
+                'last_status_check': fields.Datetime.now(),
+            })
+            raise UserError(error_msg) from e
 
     def _api_request(self, endpoint, method='POST', payload=None):
         """
-        Enhanced API request handler with FDMS error structure support
+        Enhanced API request handler with better connection error handling
         """
         self.ensure_one()
-        self._refresh_token_if_needed()
         
         try:
+            # Try to refresh token if needed, but handle connection errors here too
+            try:
+                self._refresh_token_if_needed()
+            except requests.exceptions.ConnectionError as conn_err:
+                error_data = {
+                    'code': 'CONNECTION_REFUSED',
+                    'message': _("Cannot connect to fiscal device server: %s") % self.base_url,
+                    'operation_id': '',
+                    'status': 0
+                }
+                self._log_error_details(error_data)
+                raise UserError(error_data['message']) from conn_err
+                
             _logger.debug("API Request: %s %s", method, endpoint)
             response = requests.request(
                 method,
@@ -132,11 +172,31 @@ class FiscalDevice(models.Model):
             )
             response.raise_for_status()
             return response.json()
-
+    
         except requests.exceptions.HTTPError as e:
             error_data = self._parse_error_response(e)
             self._log_error_details(error_data, e.response.json() if e.response else None)
             raise UserError(self._format_error_message(error_data)) from e
+            
+        except requests.exceptions.ConnectionError as e:
+            error_data = {
+                'code': 'CONNECTION_REFUSED',
+                'message': _("Connection refused. Please verify the server is running and accessible: %s") % self.base_url,
+                'operation_id': '',
+                'status': 0
+            }
+            self._log_error_details(error_data)
+            raise UserError(error_data['message']) from e
+            
+        except requests.exceptions.Timeout as e:
+            error_data = {
+                'code': 'TIMEOUT',
+                'message': _("Connection timed out after %s seconds. Server might be overloaded.") % TIMEOUT,
+                'operation_id': '',
+                'status': 0
+            }
+            self._log_error_details(error_data)
+            raise UserError(error_data['message']) from e
             
         except requests.exceptions.RequestException as e:
             error_data = {
@@ -178,6 +238,23 @@ class FiscalDevice(models.Model):
             })
 
         return error_data
+
+    def _handle_api_error(self, exception, message=None):
+        """Handle API request errors and log them appropriately"""
+        error_msg = message or _("API request failed")
+        
+        if isinstance(exception, requests.HTTPError):
+            status_code = exception.response.status_code
+            try:
+                error_details = exception.response.json()
+                error_msg += f": HTTP {status_code} - {error_details.get('message', '')}"
+            except ValueError:
+                error_msg += f": HTTP {status_code} - {exception.response.text}"
+        else:
+            error_msg += f": {str(exception)}"
+        
+        _logger.error("%s for device %s: %s", error_msg, self.name, str(exception))
+        return error_msg
 
     def _parse_validation_errors(self, response_data):
         """Process 422 validation errors"""
