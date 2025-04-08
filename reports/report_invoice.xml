@@ -442,19 +442,18 @@
                                             </tr>
                                             
                                             <!-- Tax Breakdown Table -->
-                                            <t t-if="tax_totals.get('groups_by_subtotal')">
+<!--                                             <t t-if="tax_totals.get('groups_by_subtotal')">
                                                 <t t-foreach="tax_totals['groups_by_subtotal'][subtotal['name']]" t-as="tax_group">
                                                     <tr>
                                                         <td>
                                                             <span t-esc="tax_group['tax_group_name']"/>
-                                                            <!-- Removed the conditional part that was causing errors -->
                                                         </td>
                                                         <td class="text-end o_price_total">
                                                             <span t-esc="'{:,.2f}'.format(tax_group['tax_group_amount'])"/>
                                                         </td>
                                                     </tr>
                                                 </t>
-                                            </t>
+                                            </t> -->
                                             
                                             <tr>
                                                 <t t-if="not display_tax_base">
