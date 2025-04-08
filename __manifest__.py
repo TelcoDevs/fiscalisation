@@ -22,7 +22,7 @@
         "views/account_move_views.xml",
         "reports/report_invoice.xml",
         'data/cron_data.xml',
-        'views/res_partner_view.xml',
+        # 'views/res_partner_view.xml',
         'views/product_view.xml'
     ],
     # only loaded in demonstration mode
