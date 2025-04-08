@@ -35,7 +35,7 @@ class AccountMove(models.Model):
     @api.depends('partner_id')
     def _compute_customer_tin(self):
         for invoice in self:
-            invoice.customer_tin = invoice.partner_id.tin_number or ''
+            invoice.customer_tin = invoice.partner_id.tin or ''
 
     @api.depends('move_type')
     def _compute_receipt_type(self):
