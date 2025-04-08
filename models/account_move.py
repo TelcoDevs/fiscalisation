@@ -202,7 +202,7 @@ class AccountMove(models.Model):
         if not partner:
             raise UserError(_("Customer information is required for fiscalisation"))
             
-        if partner.vat or partner.tin_number:
+        if partner.vat and partner.tin_number:
             buyer_data = {
                 "buyerRegisterName": partner.name,
                 "buyerTradeName": partner.commercial_partner_id.name,
