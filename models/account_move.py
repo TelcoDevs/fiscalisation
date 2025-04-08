@@ -228,7 +228,9 @@ class AccountMove(models.Model):
     def _prepare_receipt_lines(self):
         inv_lines = self.env['account.move.line'].search([
             ('move_id', '=', self.id),
-            ('quantity', '>', 0)
+            ('quantity', '>', 0),
+            ('display_type', 'in', (False, 'product')),  # Only product lines, not section/notes
+            ('product_id', '!=', False)                  # Must have an associated product
         ])
         receipt_type = self.receipt_type
         lines = []
@@ -261,14 +263,15 @@ class AccountMove(models.Model):
                     "receiptLineNo": len(lines) + 1,
                     "receiptLineHSCode": line.product_id.hs_code,
                     "receiptLineName": sale_line_data["receiptLineName"] + " (Discount)",
-                    # Ensure discount price is negative for FiscalInvoice as required (RCPT022)
                     "receiptLinePrice": -self._adjust_amount(discount_amount, receipt_type),
                     "receiptLineQuantity": float(line.quantity),
                     "receiptLineTotal": -self._adjust_amount(discount_total, receipt_type),
                 }
-                # Include tax information so that tax calculations are consistent across all lines
+                
+                # Include tax information for consistent tax calculations
                 if "taxPercent" in sale_line_data:
                     discount_line_data["taxPercent"] = sale_line_data["taxPercent"]
+                
                 lines.append(discount_line_data)
         return lines
 
