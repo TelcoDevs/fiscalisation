@@ -502,16 +502,6 @@
                                                     </td>
                                                 </t>
                                             </tr>
-                                            <tr>
-                                                <t>
-                                                    <td>
-                                                        <span class="text-nowrap">VAT</span>
-                                                    </td>
-                                                    <td class="text-end o_price_total">
-                                                        <span class="text-nowrap">0.00</span>
-                                                    </td>
-                                                </t>
-                                            </tr>
                                         </t>
                                         <tr class="border-green o_total">
                                             <td>
