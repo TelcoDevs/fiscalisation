@@ -187,7 +187,7 @@ class AccountMove(models.Model):
                 "receiptCurrency": self.currency_id.name,
                 "invoiceNo": self.name,
                 "buyerData": self._prepare_buyer_data(),
-                "receiptNotes": self.ref if self.ref else self.narration or "",
+                "receiptNotes": self.ref if self.ref else "",
                 "creditDebitNoteInvoiceNo": self.reversed_entry_id.name if self.move_type in ('out_refund', 'in_refund') else "",
                 "receiptLinesTaxInclusive": receiptLinesTaxInclusive,
                 "receiptLines": self._prepare_receipt_lines(),
