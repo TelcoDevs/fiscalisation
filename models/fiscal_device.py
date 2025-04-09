@@ -21,6 +21,7 @@ class FiscalDevice(models.Model):
     device_serial = fields.Char(string='Device Serial', required=True, tracking=True)
     activation_key = fields.Char(string='Activation Key', required=True, tracking=True)
     base_url = fields.Char(string='API Base URL', default='https://fiscal-demo.telco.co.zw', required=True, tracking=True)
+    fdms_url = fields.Char(string='API Base URL', compute='_compute_fdms_url', required=True, tracking=True)
     access_token = fields.Char(string='Access Token', copy=False)
     refresh_token = fields.Char(string='Refresh Token', copy=False)
     token_expiry = fields.Datetime(string='Token Expiry')
@@ -47,6 +48,15 @@ class FiscalDevice(models.Model):
         """Compute day open status based on fiscal day status"""
         for record in self:
             record.is_day_open = record.fiscal_day_status != 'FISCALDAYCLOSED'
+
+    @api.depends('base_url')
+    def _compute_fdms_url(self):
+        """FDMS URL for verification"""
+        for record in self:
+            if record.base_url == 'https://fiscal.telco.co.zw':
+                record.fdms_url = 'https://fdms.zimra.co.zw'
+            else:
+                record.fdms_url = 'https://fdmstest.zimra.co.zw'
     
     def action_manual_token_refresh(self):
         """Manual token refresh with user feedback"""
@@ -82,7 +92,7 @@ class FiscalDevice(models.Model):
             self._get_new_token()
 
     def _get_new_token(self):
-        """Acquire new JWT token from API"""
+        """Acquire new JWT token from API with better error handling"""
         try:
             response = requests.post(
                 f"{self.base_url}/api/v1/devices/token",
@@ -100,18 +110,58 @@ class FiscalDevice(models.Model):
                 'refresh_token': token_data['refresh_token'],
                 'token_expiry': fields.Datetime.to_string(datetime.now() + timedelta(seconds=token_data['expires_in']))
             })
+        except requests.exceptions.ConnectionError as e:
+            error_msg = _("Cannot connect to fiscal device server: %s. Connection refused.") % self.base_url
+            self.write({
+                'last_error_code': 'CONNECTION_REFUSED',
+                'last_error_message': error_msg,
+                'last_error_status': 0,
+                'last_status_check': fields.Datetime.now(),
+            })
+            raise UserError(error_msg) from e
+        except requests.exceptions.Timeout as e:
+            error_msg = _("Connection timed out after %s seconds when requesting token.") % TIMEOUT
+            self.write({
+                'last_error_code': 'TIMEOUT',
+                'last_error_message': error_msg,
+                'last_error_status': 0,
+                'last_status_check': fields.Datetime.now(),
+            })
+            raise UserError(error_msg) from e
+        except requests.exceptions.HTTPError as e:
+            error_data = self._parse_error_response(e)
+            self._log_error_details(error_data)
+            raise UserError(self._format_error_message(error_data)) from e
         except Exception as e:
-            self._handle_api_error(e, _("Token refresh failed"))
-            raise
+            error_msg = _("Token refresh failed: %s") % str(e)
+            self.write({
+                'last_error_code': 'UNKNOWN_ERROR',
+                'last_error_message': error_msg,
+                'last_error_status': 0,
+                'last_status_check': fields.Datetime.now(),
+            })
+            raise UserError(error_msg) from e
 
     def _api_request(self, endpoint, method='POST', payload=None):
         """
-        Enhanced API request handler with FDMS error structure support
+        Enhanced API request handler with better connection error handling
         """
         self.ensure_one()
-        self._refresh_token_if_needed()
         
         try:
+            # Try to refresh token if needed, but handle connection errors here too
+            try:
+                self._refresh_token_if_needed()
+            except requests.exceptions.ConnectionError as conn_err:
+                error_data = {
+                    'code': 'CONNECTION_REFUSED',
+                    'message': _("Cannot connect to fiscal device server: %s") % self.base_url,
+                    'operation_id': '',
+                    'status': 0
+                }
+                self._log_error_details(error_data)
+                raise UserError(error_data['message']) from conn_err
+                
             _logger.debug("API Request: %s %s", method, endpoint)
             response = requests.request(
                 method,
@@ -122,11 +172,31 @@ class FiscalDevice(models.Model):
             )
             response.raise_for_status()
             return response.json()
-
+    
         except requests.exceptions.HTTPError as e:
             error_data = self._parse_error_response(e)
             self._log_error_details(error_data, e.response.json() if e.response else None)
             raise UserError(self._format_error_message(error_data)) from e
+            
+        except requests.exceptions.ConnectionError as e:
+            error_data = {
+                'code': 'CONNECTION_REFUSED',
+                'message': _("Connection refused. Please verify the server is running and accessible: %s") % self.base_url,
+                'operation_id': '',
+                'status': 0
+            }
+            self._log_error_details(error_data)
+            raise UserError(error_data['message']) from e
+            
+        except requests.exceptions.Timeout as e:
+            error_data = {
+                'code': 'TIMEOUT',
+                'message': _("Connection timed out after %s seconds. Server might be overloaded.") % TIMEOUT,
+                'operation_id': '',
+                'status': 0
+            }
+            self._log_error_details(error_data)
+            raise UserError(error_data['message']) from e
             
         except requests.exceptions.RequestException as e:
             error_data = {
@@ -168,6 +238,23 @@ class FiscalDevice(models.Model):
             })
 
         return error_data
+
+    def _handle_api_error(self, exception, message=None):
+        """Handle API request errors and log them appropriately"""
+        error_msg = message or _("API request failed")
+        
+        if isinstance(exception, requests.HTTPError):
+            status_code = exception.response.status_code
+            try:
+                error_details = exception.response.json()
+                error_msg += f": HTTP {status_code} - {error_details.get('message', '')}"
+            except ValueError:
+                error_msg += f": HTTP {status_code} - {exception.response.text}"
+        else:
+            error_msg += f": {str(exception)}"
+        
+        _logger.error("%s for device %s: %s", error_msg, self.name, str(exception))
+        return error_msg
 
     def _parse_validation_errors(self, response_data):
         """Process 422 validation errors"""
@@ -351,3 +438,102 @@ class FiscalDevice(models.Model):
         })
     
     
+    @api.model
+    def cron_auto_open_fiscal_day(self):
+        """
+        Cron job to automatically open fiscal day for all devices
+        that have closed fiscal days, running between 00:00-00:30 AM
+        """
+        current_hour = fields.Datetime.now().hour
+        current_minute = fields.Datetime.now().minute
+        
+        # Only execute between 00:00-00:30 AM
+        if current_hour == 0 and current_minute < 30:
+            _logger.info("Starting automatic fiscal day opening")
+            devices = self.search([('fiscal_day_status', '=', 'FISCALDAYCLOSED')])
+            
+            for device in devices:
+                try:
+                    response = device._api_request('/api/v1/day/open')
+                    device.write({
+                        'fiscal_day_no': str(response['fiscalDayNo']),
+                        'fiscal_day_status': 'FISCALDAYOPENED',
+                        'last_operation': fields.Datetime.now()
+                    })
+                    # device.message_post(
+                    #     body=_("Fiscal day opened automatically. New fiscal day number: %s") % response['fiscalDayNo'],
+                    #     subject=_("Automatic Fiscal Day Open"),
+                    #     message_type="notification"
+                    # )
+                    _logger.info("Successfully opened fiscal day for device %s", device.name)
+                    
+                except Exception as e:
+                    error_message = str(e)
+                    _logger.error("Failed to automatically open fiscal day for device %s: %s", device.name, error_message)
+                    
+                    # device.message_post(
+                    #     body=_("Failed to automatically open fiscal day: %s") % error_message,
+                    #     subject=_("Automatic Fiscal Day Open Failed"),
+                    #     message_type="notification",
+                    #     subtype_id=self.env.ref('mail.mt_note').id,
+                    #     partner_ids=device.company_id.user_ids.mapped('partner_id').ids
+                    # )
+    
+    @api.model
+    def cron_auto_close_fiscal_day(self):
+        """
+        Cron job to automatically close fiscal day for all devices
+        that have open fiscal days, running between 11:30 PM-12:00 AM
+        """
+        current_hour = fields.Datetime.now().hour
+        current_minute = fields.Datetime.now().minute
+        
+        # Only execute between 11:30 PM and midnight
+        if (current_hour == 23 and current_minute >= 30) or (current_hour == 0 and current_minute == 0):
+            _logger.info("Starting automatic fiscal day closing")
+            devices = self.search([('fiscal_day_status', '=', 'FISCALDAYOPENED')])
+            
+            for device in devices:
+                try:
+                    response = device._api_request('/api/v1/day/close')
+                    
+                    # Process the response data
+                    device.write({
+                        'fiscal_day_status': response.get('fiscalDayStatus'),
+                        'last_receipt_global_no': response.get('lastReceiptGlobalNo'),
+                        'fiscal_day_no': response.get('fiscalDayNo'),
+                        'last_operation': fields.Datetime.now()
+                    })
+                    
+                    # Format notification message
+                    close_time = response.get('fiscalDayClosed', 'N/A')
+                    message = _(
+                        "Fiscal day closed automatically.\n"
+                        "• Fiscal Day Number: %(day_no)s\n"
+                        "• Closed At: %(close_time)s\n"
+                        "• Last Receipt: #%(receipt_no)d"
+                    ) % {
+                        'day_no': response.get('fiscalDayNo', 'N/A'),
+                        'close_time': close_time,
+                        'receipt_no': response.get('lastReceiptNo', 0)
+                    }
+                    
+                    # device.message_post(
+                    #     body=message,
+                    #     subject=_("Automatic Fiscal Day Close"),
+                    #     message_type="notification"
+                    # )
+                    
+                    _logger.info("Successfully closed fiscal day for device %s", device.name)
+                    
+                except Exception as e:
+                    error_message = str(e)
+                    _logger.error("Failed to automatically close fiscal day for device %s: %s", device.name, error_message)
+                    
+                    # device.message_post(
+                    #     body=_("Failed to automatically close fiscal day: %s") % error_message,
+                    #     subject=_("Automatic Fiscal Day Close Failed"),
+                    #     message_type="notification",
+                    #     subtype_id=self.env.ref('mail.mt_note').id,
+                    #     partner_ids=device.company_id.user_ids.mapped('partner_id').ids
+                    # )
