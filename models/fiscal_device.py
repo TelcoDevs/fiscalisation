@@ -442,13 +442,13 @@ class FiscalDevice(models.Model):
     def cron_auto_open_fiscal_day(self):
         """
         Cron job to automatically open fiscal day for all devices
-        that have closed fiscal days, running between 7:00-7:30 AM
+        that have closed fiscal days, running between 00:00-00:30 AM
         """
         current_hour = fields.Datetime.now().hour
         current_minute = fields.Datetime.now().minute
         
-        # Only execute between 7:00-7:30 AM
-        if current_hour == 7 and current_minute < 30:
+        # Only execute between 00:00-00:30 AM
+        if current_hour == 0 and current_minute < 30:
             _logger.info("Starting automatic fiscal day opening")
             devices = self.search([('fiscal_day_status', '=', 'FISCALDAYCLOSED')])
             
@@ -460,24 +460,24 @@ class FiscalDevice(models.Model):
                         'fiscal_day_status': 'FISCALDAYOPENED',
                         'last_operation': fields.Datetime.now()
                     })
-                    device.message_post(
-                        body=_("Fiscal day opened automatically. New fiscal day number: %s") % response['fiscalDayNo'],
-                        subject=_("Automatic Fiscal Day Open"),
-                        message_type="notification"
-                    )
+                    # device.message_post(
+                    #     body=_("Fiscal day opened automatically. New fiscal day number: %s") % response['fiscalDayNo'],
+                    #     subject=_("Automatic Fiscal Day Open"),
+                    #     message_type="notification"
+                    # )
                     _logger.info("Successfully opened fiscal day for device %s", device.name)
                     
                 except Exception as e:
                     error_message = str(e)
                     _logger.error("Failed to automatically open fiscal day for device %s: %s", device.name, error_message)
                     
-                    device.message_post(
-                        body=_("Failed to automatically open fiscal day: %s") % error_message,
-                        subject=_("Automatic Fiscal Day Open Failed"),
-                        message_type="notification",
-                        subtype_id=self.env.ref('mail.mt_note').id,
-                        partner_ids=device.company_id.user_ids.mapped('partner_id').ids
-                    )
+                    # device.message_post(
+                    #     body=_("Failed to automatically open fiscal day: %s") % error_message,
+                    #     subject=_("Automatic Fiscal Day Open Failed"),
+                    #     message_type="notification",
+                    #     subtype_id=self.env.ref('mail.mt_note').id,
+                    #     partner_ids=device.company_id.user_ids.mapped('partner_id').ids
+                    # )
     
     @api.model
     def cron_auto_close_fiscal_day(self):
