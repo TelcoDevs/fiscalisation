@@ -24,6 +24,7 @@
                             <field name="qr_url" readonly="1"/>
                             <field name="fiscal_date" readonly="True"/>
                             <field name="device_id" readonly="1"/>
+                            <field name="device_serial" readonly="1"/>
                             <field name="receipt_global_number" readonly="1"/>
                             <field name="receipt_number" readonly="1"/>
                             <field name="fiscal_day_no" readonly="1"/>
