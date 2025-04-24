@@ -66,7 +66,7 @@
                                     <span t-field="o.partner_id.name"/>
                                     <br/>
                                     TIN:
-                                    <span t-field="o.customer_tin"/>
+                                    <span t-field="o.partner_id.tin"/>
                                     <br/>
                                     VAT:
                                     <span t-field="o.customer_vat"/>
@@ -201,7 +201,7 @@
                                     <span t-field="o.partner_id.name"/>
                                     <br/>
                                     TIN:
-                                    <span t-field="o.customer_tin"/>
+                                    <span t-field="o.partner_id.tin"/>
                                     <br/>
                                     VAT:
                                     <span t-field="o.customer_vat"/>
