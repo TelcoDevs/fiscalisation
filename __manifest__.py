@@ -13,7 +13,7 @@ It allows for auto-management of fiscal device tokens and regular device status 
     'version': '18.0.1.0.0',
     'author': 'TELCO',
     'website': 'https://live.telco.co.zw',
-    'license': 'LGPL-3',
+    'license': 'OPL-1',
     'depends': [
         'base',
         'account',

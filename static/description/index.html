@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html class="h-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIMRA Fiscalisation</title>
+</head>
+<body class="h-100">
+    <div class="container">
+        <!-- HEADER -->
+        <div class="row bg-primary text-white py-4 mb-4">
+            <div class="col-12 text-center">
+                <h1 class="display-4">ZIMRA Fiscalisation</h1>
+                <p class="lead">Complete Fiscal Device Integration for ZIMRA Compliance</p>
+            </div>
+        </div>
+
+        <!-- OVERVIEW SECTION -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h2 class="text-primary mb-3">Overview</h2>
+                <p>The ZIMRA Fiscalisation module provides a comprehensive solution for businesses in Zimbabwe to comply with the Zimbabwe Revenue Authority (ZIMRA) fiscal requirements. This module integrates your Odoo accounting system with approved fiscal devices, ensuring all transactions are properly reported to tax authorities.</p>
+                <div class="alert alert-info">
+                    <strong>Important:</strong> This module requires a compatible ZIMRA-approved fiscal device and internet connectivity to the FDMS (Fiscal Device Management System) server.
+                </div>
+            </div>
+        </div>
+
+        <!-- KEY FEATURES SECTION -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h2 class="text-primary mb-3">Key Features</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title"><i class="fa fa-check-circle text-success mr-2"></i>Automated Token Management</h4>
+                                <p class="card-text">Automatic handling of authentication tokens with the fiscal server, including scheduled refreshing to maintain continuous connectivity.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title"><i class="fa fa-check-circle text-success mr-2"></i>Fiscal Day Management</h4>
+                                <p class="card-text">Open and close fiscal days with proper tracking of fiscal day numbers, receipts, and status.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title"><i class="fa fa-check-circle text-success mr-2"></i>Invoice Fiscalisation</h4>
+                                <p class="card-text">Seamless fiscalisation of customer invoices with proper tax calculations, buyer data submission, and HS code handling.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title"><i class="fa fa-check-circle text-success mr-2"></i>QR Code Generation</h4>
+                                <p class="card-text">Automatic generation of QR codes for fiscalised invoices, providing easy verification of fiscal compliance.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title"><i class="fa fa-check-circle text-success mr-2"></i>Comprehensive Error Handling</h4>
+                                <p class="card-text">Detailed error tracking and notification system to quickly identify and resolve integration issues.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title"><i class="fa fa-check-circle text-success mr-2"></i>Credit Note Support</h4>
+                                <p class="card-text">Full support for credit notes and refund processes with proper fiscal reporting.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TECHNICAL REQUIREMENTS -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h2 class="text-primary mb-3">Technical Requirements</h2>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Requirement</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Odoo Version</td>
+                                <td>16.0 - 18.0</td>
+                            </tr>
+                            <tr>
+                                <td>Python Dependencies</td>
+                                <td>requests, qrcode</td>
+                            </tr>
+                            <tr>
+                                <td>Internet Connectivity</td>
+                                <td>Reliable internet connection for API communication</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONFIGURATION GUIDE -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h2 class="text-primary mb-3">Configuration Guide</h2>
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h4 class="mb-0">Step 1: Fiscal Device Setup</h4>
+                    </div>
+                    <div class="card-body">
+                        <ol class="mb-0">
+                            <li>Navigate to <strong>Accounting → Configuration → Fiscal Devices</strong></li>
+                            <li>Click <strong>Create</strong> to add a new fiscal device</li>
+                            <li>Enter the device name, device ID, and serial number</li>
+                            <li>Input the activation key provided by your fiscal service provider</li>
+                            <li>Verify the API base URL (usually <code>https://fiscal-demo.telco.co.zw</code> for testing or production <code>https://fiscal.telco.co.zw</code> for live environment)</li>
+                            <li>Save the configuration</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h4 class="mb-0">Step 2: Configure Products</h4>
+                    </div>
+                    <div class="card-body">
+                        <ol class="mb-0">
+                            <li>Ensure all products have the correct HS Code set</li>
+                            <li>Verify that appropriate taxes are configured for each product</li>
+                            <li>Make sure all product prices are correctly configured with tax inclusion settings</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h4 class="mb-0">Step 3: Configure Customer Information</h4>
+                    </div>
+                    <div class="card-body">
+                        <ol class="mb-0">
+                            <li>Ensure all customers have complete information including:</li>
+                            <ul>
+                                <li>VAT Number (if applicable)</li>
+                                <li>TIN Number (if applicable)</li>
+                                <li>Complete address information</li>
+                                <li>Contact details (phone, email)</li>
+                            </ul>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DAILY OPERATIONS -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h2 class="text-primary mb-3">Daily Operations</h2>
+                
+                <!-- <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h4 class="mb-0">Opening a Fiscal Day</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>Before processing invoices, you must open a fiscal day:</p>
+                        <ol class="mb-0">
+                            <li>Navigate to <strong>Accounting → Configuration → Fiscal Devices</strong></li>
+                            <li>Select your fiscal device</li>
+                            <li>Click the <strong>Open Day</strong> button</li>
+                            <li>The system will display a confirmation message with the fiscal day number</li>
+                        </ol>
+                    </div>
+                </div> -->
+
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h4 class="mb-0">Fiscalising Invoices</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>To fiscalise an invoice:</p>
+                        <ol class="mb-0">
+                            <li>Create and validate an invoice as usual in Odoo</li>
+                            <li>Open the validated invoice</li>
+                            <li>Click the <strong>Fiscalise</strong> button</li>
+                            <li>The system will communicate with the fiscal device and update the invoice with fiscal information</li>
+                            <li>A QR code will be generated and displayed on the printed invoice</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h4 class="mb-0">Closing a Fiscal Day</h4>
+                    </div>
+                    <div class="card-body">
+                        <p>At the end of business day:</p>
+                        <ol class="mb-0">
+                            <li>Navigate to <strong>Fiscalisation → Fiscal Devices</strong></li>
+                            <li>Select your fiscal device</li>
+                            <li>Click the <strong>Close Day</strong> button</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TROUBLESHOOTING -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h2 class="text-primary mb-3">Troubleshooting</h2>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h4 class="mb-0">Common Issues</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Issue</th>
+                                        <th>Possible Solution</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Token Refresh Failure</td>
+                                        <td>Check internet connection and device activation details. Use the manual token refresh button.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Device Not Found</td>
+                                        <td>Verify the device serial and activation key. Ensure the device is registered with ZIMRA.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Missing HS Code Error</td>
+                                        <td>Update product configuration with the correct HS Code.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Mixed Tax Inclusion Types</td>
+                                        <td>Ensure all invoice lines have consistent tax inclusion settings.</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Duplicate Invoice Number</td>
+                                        <td>If you see error RCPT013, the invoice was likely already fiscalised.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUPPORT INFORMATION -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h2 class="text-primary mb-3">Support</h2>
+                <p>For technical support or assistance with this module, please contact:</p>
+                <ul>
+                    <li>Email: customer-care@teamtelco.co.zw</li>
+                    <li>Website: <a href="#">https://live.telco.co.zw</a></li>
+                </ul>
+                <p>When reporting issues, please include:</p>
+                <ul>
+                    <li>Odoo version</li>
+                    <li>Module version</li>
+                    <li>Detailed error messages or screenshots</li>
+                    <li>Steps to reproduce the issue</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- COPYRIGHT -->
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <p class="text-muted">
+                    &copy; 2025 TELCO. All rights reserved.<br>
+                    This module is published under the OPL-1 license.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
