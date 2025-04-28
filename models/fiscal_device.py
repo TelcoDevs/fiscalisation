@@ -350,4 +350,75 @@ class FiscalDevice(models.Model):
             'fiscal_day_no': response.get('lastFiscalDayNo')
         })
     
+    @api.model
+    def cron_auto_open_fiscal_day(self):
+        """
+        Cron job to automatically open fiscal day for all devices
+        that have closed fiscal days, running between 00:00-00:30 AM
+        """
+        current_hour = fields.Datetime.now().hour
+        current_minute = fields.Datetime.now().minute
+        
+        # Only execute between 00:00-00:30 AM
+        if current_hour == 0 and current_minute < 30:
+            _logger.info("Starting automatic fiscal day opening")
+            devices = self.search([('fiscal_day_status', '=', 'FISCALDAYCLOSED')])
+            
+            for device in devices:
+                try:
+                    response = device._api_request('/api/v1/day/open')
+                    device.write({
+                        'fiscal_day_no': str(response['fiscalDayNo']),
+                        'fiscal_day_status': 'FISCALDAYOPENED',
+                        'last_operation': fields.Datetime.now()
+                    })
+                    _logger.info("Successfully opened fiscal day for device %s", device.name)
+                    
+                except Exception as e:
+                    error_message = str(e)
+                    _logger.error("Failed to automatically open fiscal day for device %s: %s", device.name, error_message)
+                    
     
+    @api.model
+    def cron_auto_close_fiscal_day(self):
+        """
+        Cron job to automatically close fiscal day for all devices
+        that have open fiscal days, running between 11:30 PM-12:00 AM
+        """
+        current_hour = fields.Datetime.now().hour
+        current_minute = fields.Datetime.now().minute
+        
+        # Only execute between 11:30 PM and midnight
+        if (current_hour == 23 and current_minute >= 30) or (current_hour == 0 and current_minute == 0):
+            _logger.info("Starting automatic fiscal day closing")
+            devices = self.search([('fiscal_day_status', '=', 'FISCALDAYOPENED')])
+            
+            for device in devices:
+                try:
+                    response = device._api_request('/api/v1/day/close')
+                    
+                    # Process the response data
+                    device.write({
+                        'fiscal_day_status': response.get('fiscalDayStatus'),
+                        'last_receipt_global_no': response.get('lastReceiptGlobalNo'),
+                        'fiscal_day_no': response.get('fiscalDayNo'),
+                        'last_operation': fields.Datetime.now()
+                    })
+                    
+                    # Format notification message
+                    close_time = response.get('fiscalDayClosed', 'N/A')
+                    message = _(
+                        "Fiscal day closed automatically.\n"
+                        "• Fiscal Day Number: %(day_no)s\n"
+                        "• Closed At: %(close_time)s\n"
+                        "• Last Receipt: #%(receipt_no)d"
+                    ) % {
+                        'day_no': response.get('fiscalDayNo', 'N/A'),
+                        'close_time': close_time,
+                        'receipt_no': response.get('lastReceiptNo', 0)
+                    }
+                    _logger.info("Successfully closed fiscal day for device %s", device.name)
+                    
+                except Exception as e:
+                    error_message = str(e)
+                    _logger.error("Failed to automatically close fiscal day for device %s: %s", device.name, error_message)
