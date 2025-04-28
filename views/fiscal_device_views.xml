@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- View fiscal.device View List -->
-    <record id="view_fiscal_device_list" model="ir.ui.view">
-        <field name="name">view.fiscal.device.list</field>
+    <!-- View fiscal.device View Tree -->
+    <record id="view_fiscal_device_tree" model="ir.ui.view">
+        <field name="name">view.fiscal.device.tree</field>
         <field name="model">fiscal.device</field>
         <field name="arch" type="xml">
-            <list>
-                <field name="name" />
-                <field name="device_id" />
-                <field name="device_serial" />
-                <field name="activation_key" />
-            </list>
+            <tree>
+                <field name="name"/>
+                <field name="device_id"/>
+                <field name="device_serial"/>
+                <field name="activation_key"/>
+            </tree>
         </field>
     </record>
 
@@ -35,12 +35,12 @@
                             string="Open Day" 
                             type="object"
                             class="btn-primary"
-                            invisible="is_day_open"/>
+                            attrs="{'invisible': [('is_day_open','=',True)]}"/>
                     <button name="action_close_day" 
                             string="Close Day" 
                             type="object"
                             class="btn-danger"
-                            invisible="not is_day_open"/>
+                            attrs="{'invisible': [('is_day_open','=',False)]}"/>
                 </header>
                 <sheet>
                     <div class="oe_title">
@@ -127,7 +127,7 @@
         <field name="name">Fiscal Device</field>
         <field name="type">ir.actions.act_window</field>
         <field name="res_model">fiscal.device</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">tree,form</field>
         <field name="domain">[]</field>
         <field name="context">{}</field>
         <field name="help" type="html">
@@ -144,11 +144,9 @@
         groups="fiscalisation.admin_fiscalisation"
     />
     <!-- menu categories -->
-    <menuitem name="Devices" id="fiscalisation.menu_1" parent="fiscalisation.menu_root"/>
-    <!-- <menuitem name="Menu 2" id="fiscalisation.menu_2" parent="fiscalisation.menu_root"/> -->
-    <!-- actions -->
-    <menuitem name="List" id="fiscalisation.menu_1_list" parent="fiscalisation.menu_1"
-              action="fiscalisation.action_fiscal_device"/>
-    <!-- <menuitem name="Server to list" id="fiscalisation" parent="fiscalisation.menu_2"
-              action="fiscalisation.action_server"/> -->
+    <menuitem name="Devices" 
+            id="fiscalisation.menu_1" 
+            parent="fiscalisation.menu_root"
+            action="fiscalisation.action_fiscal_device"
+            />
 </odoo>

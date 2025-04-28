@@ -20,20 +20,19 @@
                     <span t-elif="o.move_type == 'in_invoice'">Vendor Bill</span>
                     <span t-if="o.name != '/'" t-field="o.name">INV/2023/0001</span>
                 </t>
-                
-                <div class="mt-5 clearfix">
+                <div class="clearfix">
                     <div class="page mb-4">
                         <!-- Conditional Display Based on Device ID -->
                         <t t-if="o.device_id">
                             <!-- Fiscal Invoice Header -->
-                            <h2 class="col-6" style="max-width: 50%; text-align: left; margin-top: 0 !important; padding-top: 5px;">
+                            <h2 class="text-center" style="max-width: 100%; text-align: center; margin-top: 0 !important; padding-top: 0px;">
                                 <br/>
-                                <span style="" t-field="o.currency_id.name"/>
+                                <span t-field="o.currency_id.name"/>
                                 <span t-if="o.move_type == 'out_invoice' and o.state == 'posted' and o.partner_id.vat">FISCAL TAX INVOICE</span>
                                 <span t-elif="o.move_type == 'out_invoice' and o.state == 'posted'">FISCAL INVOICE</span>
                                 <span t-elif="o.move_type == 'out_invoice' and o.state == 'draft'">Draft Invoice</span>
                                 <span t-elif="o.move_type == 'out_invoice' and o.state == 'cancel'">CANCELLED INVOICE</span>
-                                <span t-elif="o.move_type == 'out_refund' and o.state == 'posted'" style="text-align: left; margin-top: -10% !important;">CREDIT NOTE</span>
+                                <span t-elif="o.move_type == 'out_refund' and o.state == 'posted'" style="text-align: center; margin-top: -10% !important;">CREDIT NOTE</span>
                                 <span t-elif="o.move_type == 'out_refund' and o.state == 'draft'">Draft Credit Note</span>
                                 <span t-elif="o.move_type == 'out_refund' and o.state == 'cancel'">Cancelled Credit Note</span>
                                 <span t-elif="o.move_type == 'in_refund'">DEBIT NOTE</span>
@@ -175,10 +174,6 @@
                                     <strong>Due Date</strong>
                                     <div t-field="o.invoice_date_due">2023-10-31</div>
                                 </div>
-                                <div class="col" t-if="o.delivery_date" name="delivery_date">
-                                    <strong>Delivery Date</strong>
-                                    <div t-field="o.delivery_date">2023-09-25</div>
-                                </div>
                                 <div class="col" t-if="o.invoice_origin" name="origin">
                                     <strong>Source</strong>
                                     <div t-field="o.invoice_origin">SO123</div>
@@ -218,7 +213,8 @@
                                     <div class="row">
                                         <div class="col-6">
                                             <strong>Device Serial No:</strong>
-                                            <span t-field="o.device_serial"/>
+                                            <t t-set="device" t-value="env['fiscal.device'].search([('company_id', '=', o.company_id.id)], limit=1)"/>
+                                            <span t-esc="device.device_serial if device else 'N/A'"/>
                                         </div>
                                         <div class="col-6">
                                             <strong>Invoice No:</strong>
@@ -374,7 +370,7 @@
                                             <td t-attf-class="text-end">
                                                 <span t-esc="'{:,.2f}'.format(line.price_subtotal)"/>
                                             </td>
-                                            <t t-set="taxes" t-value="', '.join([(tax.invoice_label or tax.name) for tax in line.tax_ids])"/>
+                                            <t t-set="taxes" t-value="', '.join([tax.name for tax in line.tax_ids])"/>
                                             <td name="td_taxes" class="text-end">
                                                 <t t-if="line.tax_ids and line.price_total > line.price_subtotal">
                                                     <t t-if="o.company_id.tax_calculation_rounding_method == 'round_globally'">
@@ -446,21 +442,18 @@
                                             </tr>
                                             
                                             <!-- Tax Breakdown Table -->
-                                            <t t-if="tax_totals.get('groups_by_subtotal')">
+<!--                                             <t t-if="tax_totals.get('groups_by_subtotal')">
                                                 <t t-foreach="tax_totals['groups_by_subtotal'][subtotal['name']]" t-as="tax_group">
                                                     <tr>
                                                         <td>
                                                             <span t-esc="tax_group['tax_group_name']"/>
-                                                            <span t-if="tax_group['group_tax_base_amount'] != tax_group['group_amount']"> on 
-                                                                <span t-esc="'{:,.2f}'.format(tax_group['group_tax_base_amount'])"/>
-                                                            </span>
                                                         </td>
                                                         <td class="text-end o_price_total">
                                                             <span t-esc="'{:,.2f}'.format(tax_group['tax_group_amount'])"/>
                                                         </td>
                                                     </tr>
                                                 </t>
-                                            </t>
+                                            </t> -->
                                             
                                             <tr>
                                                 <t t-if="not display_tax_base">
@@ -505,16 +498,6 @@
                                                         <t t-elif="current_disc &gt; 0">
                                                             <span t-esc="'{:,.2f}'.format(current_disc)"/>
                                                         </t>
-                                                    </td>
-                                                </t>
-                                            </tr>
-                                            <tr>
-                                                <t>
-                                                    <td>
-                                                        <span class="text-nowrap">VAT</span>
-                                                    </td>
-                                                    <td class="text-end o_price_total">
-                                                        <span class="text-nowrap">0.00</span>
                                                     </td>
                                                 </t>
                                             </tr>

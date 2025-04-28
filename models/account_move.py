@@ -15,18 +15,17 @@ class AccountMove(models.Model):
     customer_vat = fields.Char(string='Customer VAT', compute='_compute_customer_vat', store=True)
     customer_tin = fields.Char(string='Customer TIN', compute='_compute_customer_tin', store=True)
     receipt_type = fields.Char(string='Receipt Type', compute='_compute_receipt_type')
-    qr_url = fields.Char(string='QR Code URL', readonly=True, copy=False)
+    qr_url = fields.Char(string='QR Code URL', copy=False)
     qr_code = fields.Binary(string='QR Code', compute='_compute_qr_code', copy=False)
     fdms_url = fields.Char(string='FDMS URL', readonly=True, copy=False, compute='_compute_fdms_url')
-    fiscal_date = fields.Datetime(string='Fiscalisation Date', readonly=True, copy=False)
-    device_id = fields.Char(string='Device ID', readonly=True, compute='_compute_device_id')
-    device_serial = fields.Char(string='Device Serial', readonly=True, compute='_compute_device_serial')
+    fiscal_date = fields.Datetime(string='Fiscalisation Date', copy=False)
+    device_id = fields.Char(string='Device ID', readonly=True, compute='_compute_device_id', store=True)
+    device_serial = fields.Char(string='Device Serial', readonly=True, compute='_compute_device_serial', store=True)
     receipt_global_number = fields.Char(string='Receipt Global Number', readonly=True, copy=False)
     receipt_number = fields.Char(string='Receipt Number', readonly=True, copy=False)
     fiscal_day_no = fields.Char(string='Fiscal Day', readonly=True, copy=False)
-    verification_code = fields.Char(string='Verification Code', readonly=True, copy=False)
+    verification_code = fields.Char(string='Verification Code', copy=False)
     fiscalised = fields.Boolean(string='Fiscalised', readonly=True, default=False, copy=False)
-    fiscal_receipt_id = fields.Many2one('fiscalisation.receipts', string='Fiscal Receipt', readonly=True, copy=False)
 
     @api.depends('partner_id')
     def _compute_customer_vat(self):
@@ -36,7 +35,7 @@ class AccountMove(models.Model):
     @api.depends('partner_id')
     def _compute_customer_tin(self):
         for invoice in self:
-            invoice.customer_tin = invoice.partner_id.tin_number or ''
+            invoice.customer_tin = invoice.partner_id.tin or ''
 
     @api.depends('move_type')
     def _compute_receipt_type(self):
@@ -70,16 +69,16 @@ class AccountMove(models.Model):
             device = self.env['fiscal.device'].search([
                 ('company_id', '=', invoice.company_id.id)
             ], limit=1)
-            invoice.fdms_url = device.base_url if device else False
+            invoice.fdms_url = device.fdms_url if device else False
 
     def _compute_qr_code(self):
         for invoice in self:
             if invoice.verification_code:
-                invoice.qr_code = self._generate_qr_code(invoice.qr_url)
+                invoice.qr_code = self._generate_fiscal_invoice_qr_code(invoice.qr_url)
             else:
                 invoice.qr_code = False
 
-    def _generate_qr_code(self, data):
+    def _generate_fiscal_invoice_qr_code(self, data):
         try:
             import qrcode
             from io import BytesIO
@@ -188,7 +187,7 @@ class AccountMove(models.Model):
                 "receiptCurrency": self.currency_id.name,
                 "invoiceNo": self.name,
                 "buyerData": self._prepare_buyer_data(),
-                "receiptNotes": self.ref if self.ref else self.narration or "",
+                "receiptNotes": self.ref if self.ref else "",
                 "creditDebitNoteInvoiceNo": self.reversed_entry_id.name if self.move_type in ('out_refund', 'in_refund') else "",
                 "receiptLinesTaxInclusive": receiptLinesTaxInclusive,
                 "receiptLines": self._prepare_receipt_lines(),
@@ -203,7 +202,7 @@ class AccountMove(models.Model):
         if not partner:
             raise UserError(_("Customer information is required for fiscalisation"))
             
-        if partner.vat or partner.tin_number:
+        if partner.vat and partner.tin_number:
             buyer_data = {
                 "buyerRegisterName": partner.name,
                 "buyerTradeName": partner.commercial_partner_id.name,
@@ -229,7 +228,9 @@ class AccountMove(models.Model):
     def _prepare_receipt_lines(self):
         inv_lines = self.env['account.move.line'].search([
             ('move_id', '=', self.id),
-            ('quantity', '>', 0)
+            ('quantity', '>', 0),
+            ('display_type', 'in', (False, 'product')),  # Only product lines, not section/notes
+            ('product_id', '!=', False)                  # Must have an associated product
         ])
         receipt_type = self.receipt_type
         lines = []
@@ -254,7 +255,7 @@ class AccountMove(models.Model):
             lines.append(sale_line_data)
 
             # If the line has a discount, add a separate discount line
-            if line.discount > 0 or 'discount' in line.name.lower():
+            if line.discount > 0:
                 discount_amount = line.price_unit * (line.discount / 100.0)
                 discount_total = discount_amount * line.quantity
                 discount_line_data = {
@@ -262,14 +263,15 @@ class AccountMove(models.Model):
                     "receiptLineNo": len(lines) + 1,
                     "receiptLineHSCode": line.product_id.hs_code,
                     "receiptLineName": sale_line_data["receiptLineName"] + " (Discount)",
-                    # Ensure discount price is negative for FiscalInvoice as required (RCPT022)
                     "receiptLinePrice": -self._adjust_amount(discount_amount, receipt_type),
                     "receiptLineQuantity": float(line.quantity),
                     "receiptLineTotal": -self._adjust_amount(discount_total, receipt_type),
                 }
-                # Include tax information so that tax calculations are consistent across all lines
+                
+                # Include tax information for consistent tax calculations
                 if "taxPercent" in sale_line_data:
                     discount_line_data["taxPercent"] = sale_line_data["taxPercent"]
+                
                 lines.append(discount_line_data)
         return lines
 
